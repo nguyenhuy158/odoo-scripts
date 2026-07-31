@@ -46,6 +46,7 @@ click-odoo -c /etc/odoo/odoo.conf -d mydb
 | `scripts/record_counts.py` | Count records of common models | ✅ |
 | `scripts/deactivate_user.py` | Deactivate a user by login (edit LOGIN first) | ❌ writes |
 | `scripts/filestore_audit.py` | Audit filestore: referenced vs missing vs orphan files, sizes | ✅ |
+| `scripts/attachment_by_model.py` | Attachment disk usage grouped by res_model, biggest first | ✅ |
 
 ## Writing a new script
 
