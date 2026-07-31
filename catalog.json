@@ -1,0 +1,27 @@
+{
+  "list_users.py": {
+    "category": "users",
+    "description": "List active users with login, name, email",
+    "output": "table: login | name | email + count"
+  },
+  "record_counts.py": {
+    "category": "db",
+    "description": "Count records of common models",
+    "output": "table: model | count"
+  },
+  "deactivate_user.py": {
+    "category": "users",
+    "description": "Deactivate a user by login (edit LOGIN first)",
+    "output": "deactivated: <login> (<name>)"
+  },
+  "filestore_audit.py": {
+    "category": "filestore",
+    "description": "Referenced vs missing vs orphan files, sizes",
+    "output": "ASCII boxes + size bars, reclaimable GiB"
+  },
+  "attachment_by_model.py": {
+    "category": "filestore",
+    "description": "Attachment disk usage grouped by res_model",
+    "output": "table per model + share bars + TOTAL"
+  }
+}
