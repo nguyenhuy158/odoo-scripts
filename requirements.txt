@@ -1,0 +1,1 @@
+click-odoo>=2.0
