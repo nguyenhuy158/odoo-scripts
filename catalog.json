@@ -16,8 +16,8 @@
   },
   "filestore_audit.py": {
     "category": "filestore",
-    "description": "Referenced vs missing vs orphan files, sizes",
-    "output": "ASCII boxes + size bars, reclaimable GiB"
+    "description": "Referenced vs missing vs orphan files, sizes; external storage split by prefix",
+    "output": "ASCII boxes + size bars, external counts, reclaimable GiB"
   },
   "attachment_by_model.py": {
     "category": "filestore",

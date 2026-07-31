@@ -1,14 +1,26 @@
 """Audit the filestore: referenced vs missing vs orphan files, with sizes.
 
 Read-only. Compares ir_attachment.store_fname against files on disk.
+Attachments stored externally (matching EXTERNAL_STORE_PREFIXES, e.g.
+s3:// or azure://) are counted separately and excluded from the local
+disk cross-check.
 
 Usage:
     click-odoo -c odoo.conf -d mydb scripts/filestore_audit.py
 """
 
 import os
+from collections import Counter
+
+# Thay bằng prefix thực tế đang dùng.
+# Ví dụ: ('s3://',) hoặc ('azure://', 's3://')
+EXTERNAL_STORE_PREFIXES = ("PREFIX_EXTERNAL/",)
 
 WIDTH = 62
+
+
+def is_external_path(store_fname):
+    return store_fname.startswith(EXTERNAL_STORE_PREFIXES)
 
 
 def fmt_size(num_bytes):
@@ -60,6 +72,9 @@ env.cr.execute(
 )
 referenced_paths = {r[0] for r in env.cr.fetchall()}
 
+external_paths = {path for path in referenced_paths if is_external_path(path)}
+local_referenced_paths = referenced_paths - external_paths
+
 disk_files = {}
 for root, _, filenames in os.walk(filestore):
     for filename in filenames:
@@ -71,9 +86,14 @@ for root, _, filenames in os.walk(filestore):
 
         disk_files[relative_path] = os.path.getsize(path)
 
-existing_paths = referenced_paths & disk_files.keys()
-missing_paths = referenced_paths - disk_files.keys()
-orphan_paths = disk_files.keys() - referenced_paths
+existing_paths = local_referenced_paths & disk_files.keys()
+missing_paths = local_referenced_paths - disk_files.keys()
+orphan_paths = disk_files.keys() - local_referenced_paths
+
+external_prefix_counts = Counter(
+    next(prefix for prefix in EXTERNAL_STORE_PREFIXES if path.startswith(prefix))
+    for path in external_paths
+)
 
 referenced_size = sum(disk_files[p] for p in existing_paths)
 orphan_size = sum(disk_files[p] for p in orphan_paths)
@@ -85,12 +105,20 @@ print(f"  {filestore}")
 section("Database")
 row("ir.attachment records", f"{attachment_records:,}")
 row("Referenced physical files", f"{referenced_paths_count:,}")
+row("Local referenced files", f"{len(local_referenced_paths):,}")
 
-section("Disk")
+section("External storage")
+row("External stored files", f"{len(external_paths):,}")
+for prefix, count in sorted(external_prefix_counts.items()):
+    row(f"  {prefix!r}", f"{count:,}")
+if not external_paths:
+    print(f"│ (none matching {EXTERNAL_STORE_PREFIXES})")
+
+section("Local disk")
 row("Files on disk", f"{len(disk_files):,}")
 row("Total physical size", fmt_size(total_size))
 
-section("Cross-check")
+section("Cross-check (local only)")
 row("Referenced & existing", f"{len(existing_paths):,}")
 row("Missing (in DB, not on disk)", f"{len(missing_paths):,}")
 row("Orphan (on disk, not in DB)", f"{len(orphan_paths):,}")
@@ -101,8 +129,8 @@ print(f"│ orphan     {bar(orphan_size, total_size)}  {fmt_size(orphan_size)}")
 
 print()
 if missing_paths:
-    print(f"⚠  {len(missing_paths):,} attachment(s) point to files that no longer exist!")
+    print(f"⚠  {len(missing_paths):,} attachment(s) point to local files that no longer exist!")
 if orphan_paths:
     print(f"♻  {fmt_size(orphan_size)} reclaimable from orphan files.")
 if not missing_paths and not orphan_paths:
-    print("✔  Filestore is clean: no missing and no orphan files.")
+    print("✔  Filestore is clean: no missing and no orphan local files.")
