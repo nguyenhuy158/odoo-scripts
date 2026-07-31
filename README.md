@@ -45,6 +45,7 @@ click-odoo -c /etc/odoo/odoo.conf -d mydb
 | `scripts/list_users.py` | List active users with login and email | ✅ |
 | `scripts/record_counts.py` | Count records of common models | ✅ |
 | `scripts/deactivate_user.py` | Deactivate a user by login (edit LOGIN first) | ❌ writes |
+| `scripts/filestore_audit.py` | Audit filestore: referenced vs missing vs orphan files, sizes | ✅ |
 
 ## Writing a new script
 
